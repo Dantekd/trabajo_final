@@ -1,0 +1,36 @@
+{
+    "usuario": [
+        {
+            "nombre_usuario": "Pepe",
+            "contrasena": "76543"
+        },
+        {
+            "nombre_usuario": "Laura",
+            "contrasena": "12345"
+        },
+        {
+            "nombre_usuario": "Raul",
+            "contrasena": "443"
+        }
+    ],
+    "stats": [
+        {
+            "puntaje": 300,
+            "partidas_guardadas": 3,
+            "configuración": "autismo",
+            "errores": 6
+        },
+        {
+            "puntaje": 270,
+            "partidas_guardadas": 1,
+            "configuración": "estandar",
+            "errores": 4
+        },
+        {
+            "puntaje": 0,
+            "partidas_guardadas": 0,
+            "configuración": "estandar",
+            "errores": 0
+        }
+    ]
+}
