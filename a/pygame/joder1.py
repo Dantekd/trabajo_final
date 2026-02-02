@@ -40,7 +40,7 @@ R_CLOCK = pygame.time.Clock()
 
 # ========== UTILIDADES ==========
 def obtener_palabra_mas_larga(palabras: list) -> str:
-    """Devuelve la palabra más larga de la lista (si empatan, la primera)."""
+    """Devuelve la palabra más larga de la lista."""
     mayor = ""
     i = 0
     while i < len(palabras):
@@ -100,7 +100,7 @@ def ejecutar_partida_pygame(partida: dict) -> int:
                         botones_usados.append(
                             crear_boton_usado(boton["letra"], len(botones_usados))
                         )
-
+                        
                 # CLICK EN BOTONES INFERIORES (DESHACER)
                 i = 0
                 while i < len(botones_usados):
@@ -132,7 +132,8 @@ def ejecutar_partida_pygame(partida: dict) -> int:
                             mostrar_mensaje("Palabra repetida")
                         else:
                             mostrar_mensaje("Palabra inválida")
-
+                            estado["errores"] += 0
+                            mostrar_mensaje("Letra incorrecta")
                         palabra_actual.clear()
                         botones_usados.clear()
                         for b in botones_disponibles:
@@ -143,18 +144,20 @@ def ejecutar_partida_pygame(partida: dict) -> int:
             mostrar_mensaje("Se acabó el tiempo")
             running = False
 
-        if estado["errores"] >= estado["intentos_maximos"]:
+        # comprobar errores maximos (intentos_maximos en estado)
+        if estado.get("errores", 0) >= estado.get("intentos_maximos", 5):
             mostrar_mensaje("Máximos errores alcanzados")
             running = False
+
 
         if len(estado["palabras_encontradas"]) >= len(estado["palabras_validas"]):
             mostrar_mensaje("No quedan palabras")
             running = False
 
         # ===== DIBUJADO =====
-        dibujar_vertical_degradado(PANTALLA, (10, 10, 60), (10, 120, 200))
+        dibujar_vertical_degradado(PANTALLA, (238, 118, 94), (255, 168, 89))
         #CAJA DONDE ESTAN LOS BOTONES
-        dibujar_rect_redondeado(PANTALLA,(250, 155, 155),260, 310,340, 60,borde=3)
+        dibujar_rect_redondeado(PANTALLA,(250, 155, 155),100, 310,670, 60,borde=0)#dimensiones pantalla
         # BOTONES SUPERIORES
         
         # botones
@@ -166,6 +169,8 @@ def ejecutar_partida_pygame(partida: dict) -> int:
             FUENTE_TIMER.render(f"Tiempo: {int(tiempo_restante)}", True, (255, 255, 255)),
             (740, 20)
         )
+        #ERRORES
+        PANTALLA.blit(FUENTE_PEQUENA.render("Errores: " + str(estado["errores"]), True, (255, 180, 180)), (20, 52))
 
         # CONTADOR PALABRAS
         PANTALLA.blit(
@@ -176,13 +181,13 @@ def ejecutar_partida_pygame(partida: dict) -> int:
         if mensaje_timer > 0:
             PANTALLA.blit(
                 FUENTE_PEQUENA.render(mensaje, True, (255, 255, 0)),
-                (50, 300)
+                (340, 25)
             )
             mensaje_timer -= dt
 
         pygame.display.update()
 
-    return estado["puntaje"]
+    return estado["puntaje"],estado["errores"]
 
 
 # ========== FLUJO DE NIVELES Y PARTIDAS ==========
@@ -190,6 +195,7 @@ def jugar_toda_la_partida(max_niveles: int = 5, max_partidas_por_nivel: int = 3)
     niveles = cargar_niveles()
     puntaje_total = 0
     i_nivel = 0
+    errores_total= 0
     # limitar a lo disponible y a max_niveles
     limite_niveles = len(niveles)
     if limite_niveles > max_niveles:
@@ -202,21 +208,25 @@ def jugar_toda_la_partida(max_niveles: int = 5, max_partidas_por_nivel: int = 3)
         while partidas_jugadas < max_partidas_por_nivel and partidas_jugadas < len(nivel["partidas"]):
             # obtener partida aleatoria sin repetir
             datos = buscar_partida_aleatoria_sin_repetir(nivel)
-            puntos = ejecutar_partida_pygame(datos)
+            puntos,errores = ejecutar_partida_pygame(datos)
+            
 
             # mostrar pantalla de resumen y esperar tecla para continuar
-            mostrar_resumen_partida(puntos)
+            mostrar_resumen_partida(puntos,errores)
             puntaje_total += puntos
+            errores_total += errores
 
             partidas_jugadas += 1
 
         i_nivel += 1
 
-    # FIN JUEGO: mostrar puntaje total
+    # FIN JUEGO: mostrar puntaje y errores totalales
     mostrar_resumen_final(puntaje_total)
+    mostrar_resumen_final(errores_total)
+
 
 #Resultados de la partida
-def mostrar_resumen_partida(puntos_obtenidos: int):
+def mostrar_resumen_partida(puntos_obtenidos: int,errores:int):
     # pinta una pantalla simple con el puntaje de la partida y espera tecla para seguir
     espera = True
     while espera:
@@ -229,7 +239,8 @@ def mostrar_resumen_partida(puntos_obtenidos: int):
 
         dibujar_vertical_degradado(PANTALLA, (0, 0, 80), (0, 150, 255))
         dibujar_texto_centrado(PANTALLA, f"Puntos de esta partida: {puntos_obtenidos}", FUENTE, (255, 255, 255), 200)
-        dibujar_texto_centrado(PANTALLA, "Presiona cualquier tecla para continuar...", FUENTE_PEQUENA, (200, 200, 200), 260)
+        dibujar_texto_centrado(PANTALLA, f"Errores de esta partida: {errores}", FUENTE, (255, 255, 255), 260)
+        dibujar_texto_centrado(PANTALLA, "Presiona cualquier tecla para continuar...", FUENTE_PEQUENA, (200, 200, 200), 340)
         pygame.display.update()
         R_CLOCK.tick(30)
 
@@ -246,12 +257,13 @@ def mostrar_resumen_final(total):
 
         dibujar_vertical_degradado(PANTALLA, (5, 20, 50), (0, 100, 180))
         dibujar_texto_centrado(PANTALLA, f"Puntaje total: {total}", FUENTE, (255, 255, 255), 200)
-        dibujar_texto_centrado(PANTALLA, "Juego finalizado. Presiona cualquier tecla para salir.", FUENTE_PEQUENA, (200, 200, 200), 260)
+        dibujar_texto_centrado(PANTALLA, f"errores total: {total}", FUENTE, (255, 255, 255), 260)
+        dibujar_texto_centrado(PANTALLA, "Juego finalizado. Presiona cualquier tecla para salir.", FUENTE_PEQUENA, (200, 200, 200), 280)
         pygame.display.update()
         R_CLOCK.tick(30)
 
 # max nivel 5 y max partidas 3
 # ========== START ==========
 if __name__ == "__main__":
-    jugar_toda_la_partida(max_niveles=5, max_partidas_por_nivel=3)
+    jugar_toda_la_partida(max_niveles=2, max_partidas_por_nivel=1)
     pygame.quit()

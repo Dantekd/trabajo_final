@@ -39,7 +39,7 @@ def crear_botones(letras):
         x += 50
     return botones
 
-botones = crear_botones(base_lista)
+botones = crear_botones(base_lista) 
 clock = pygame.time.Clock()
 
 while bandera_pantalla:

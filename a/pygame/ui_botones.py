@@ -2,7 +2,7 @@ import pygame
 #Dimensiones del boton que esta
 def crear_botones_letras_csv(letras):
     botones = []
-    x = 300
+    x = 150
     y = 220
 
     for letra in letras:
@@ -18,7 +18,7 @@ def crear_botones_letras_csv(letras):
 def crear_boton_usado(letra, index):
     boton = {
         "letra": letra,
-        "rect": pygame.Rect(300 + index * 68, 310, 48, 48)
+        "rect": pygame.Rect(150 + index * 68, 315, 48, 48)
     }
     return boton
 
