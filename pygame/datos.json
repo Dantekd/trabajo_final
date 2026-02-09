@@ -11,25 +11,35 @@
         {
             "nombre_usuario": "Raul",
             "contrasena": "443"
+        },
+        {
+            "nombre_usuario": "Dante",
+            "contrasena": "2007"
         }
     ],
     "stats": [
         {
             "puntaje": 300,
             "partidas_guardadas": 3,
-            "configuración": "autismo",
-            "errores": 6
+            "errores": 6,
+            "configuracion": "estandar"
         },
         {
             "puntaje": 270,
             "partidas_guardadas": 1,
-            "configuración": "estandar",
+            "configuracion": "estandar",
             "errores": 4
         },
         {
             "puntaje": 0,
             "partidas_guardadas": 0,
-            "configuración": "estandar",
+            "configuracion": "estandar",
+            "errores": 0
+        },
+        {
+            "puntaje": 0,
+            "partidas_guardadas": 0,
+            "configuracion": "estandar",
             "errores": 0
         }
     ]

@@ -14,20 +14,32 @@ if RUTA_PROYECTO not in sys.path:
 # ========== IMPORTS DEL PROYECTO ==========
 from csv_datos import cargar_niveles
 from nucleo_juego import preparar_partida, buscar_partida_aleatoria_sin_repetir
-from nucleo_pygame import crear_estado_pygame,procesar_palabra_pygame
+from nucleo_pygame import crear_estado_pygame,procesar_palabra_pygame 
 from logicas_pygame import *
 from ui_dibujado import *
 from ui_botones import *
 from audio_pygame import controlar_audio
+from acciones_jugador import *
+from login_pygame import pantalla_login,  pantalla_configuracion
 
 # ========== INICIALIZACION PYGAME ==========
 pygame.init()
-#Musica de fondo
+#El juego incorpora música de fondo controlada mediante eventos de teclado. El sistema de audio está desacoplado
+#de la lógica del juego y permite subir, bajar, mutear o maximizar el volumen. Para perfiles con adaptación 
+#TEA, el volumen inicial se reduce y no se reproducen sonidos abruptos, manteniendo la funcionalidad completa.
+indice_usuario = pantalla_login()
+#El perfil se obtiene a partir del sistema de login y configuración, donde cada usuario selecciona una 
+# configuración que luego se utiliza para adaptar aspectos del juego como el volumen y la interfaz.
+perfil = pantalla_configuracion(indice_usuario)
 pygame.mixer.music.load("Final/pygame/sonido/fondo.mp3")
 pygame.mixer.music.play(-1)
+if perfil == "tea":
+    pygame.mixer.music.set_volume(0.02)
+else:
+    pygame.mixer.music.set_volume(0.05)
 
 DIM = (900, 600)#averiguar que es D
-PANTALLA = pygame.display.set_mode(DIM)
+PANTALLA = pygame.display.set_mode((900, 600))
 #titulo del juego
 pygame.display.set_caption("AHORCADO - Encina")
 #Icono del juego
@@ -53,103 +65,126 @@ sonido_max = pygame.transform.scale(sonido_max, (40, 40))
 
 # ========== LOGICA DE PARTIDA (HÍBRIDA) ==========
 
-def ejecutar_partida_pygame(partida: dict,comodines_nivel: dict):
 
+def inicializar_partida_pygame(partida, perfil):
     base_set, base_lista, palabras_validas = preparar_partida(partida)
 
-    estado = crear_estado_pygame(base_lista, palabras_validas)
-
-    botones_usados = []
-    palabra_actual = []
-
+    estado = crear_estado_pygame(base_lista, palabras_validas, perfil)
     #Randomizador de botones_letras_csv
-    letras_mezcladas = base_lista[:]
-    random.shuffle(letras_mezcladas)
+    letras = base_lista[:]
+    random.shuffle(letras)
+
+    datos_partida = {
+        "estado": estado,
+        "botones_disponibles": crear_botones_letras_csv(letras),
+        "botones_usados": [],
+        "botones_accion": crear_botones_accion(),
+        "botones_comodines": crear_botones_comodines(),
+        "comodines_usados": {"revelar": False, "ubicar": False, "nivel": False},
+        "tiempo_restante": 60
+    }
+
+    return datos_partida
+
+
+def ejecutar_partida_pygame(partida):
+
+    datos = inicializar_partida_pygame(partida, perfil)
+
+    estado = datos["estado"]
     #Controla los botones que aun no se usaron
-    botones_disponibles = crear_botones_letras_csv(letras_mezcladas)
+    botones_disponibles = datos["botones_disponibles"]
+    botones_usados = datos["botones_usados"]
+    botones_accion = datos["botones_accion"]
+    comodines_usados = datos["comodines_usados"]
+    tiempo_restante = datos["tiempo_restante"]
     #Los botones de los comdines 
-    botones_comodines = crear_botones_comodines()
+    botones_comodines = datos["botones_comodines"]
+   
     #Tiempo
-    tiempo_restante = 60
-    #
-    
-    
-
     clock = pygame.time.Clock()
-
+    running = True
+    cambio_nivel = None
     mensaje = ""
     mensaje_timer = 0
+    
 
-    running = True
-    fin_partida = False
-    fin_juego = False
-    cambio_nivel = None
     while running:
-
-        keys = pygame.key.get_pressed()
+        
         dt = clock.tick(60) / 1000
+        keys = pygame.key.get_pressed()
 
         for ev in pygame.event.get():
-
             if ev.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-            if ev.type == pygame.MOUSEBUTTONDOWN:
+            # eventos de partida
+            resultado = manejar_eventos_partida(ev,estado,botones_disponibles,botones_usados,botones_accion,botones_comodines,comodines_usados)
 
-                pos = pygame.mouse.get_pos()
+            if resultado is not None:
+                tipo, valor = resultado
 
-                manejar_click_botones(pos, botones_disponibles, botones_usados, palabra_actual)
-                manejar_click_usados(pos, botones_disponibles, botones_usados, palabra_actual)
+                if tipo == "revelar":
+                    estado["mensaje"] = f"Palabra: {valor}"
+                    estado["mensaje_timer"] = 3
 
-                #es lo que trae el funcionamiento al hacer click en el comodin
-                tiempo_restante, cambio= manejar_click_comodines(pos,botones_comodines,comodines_nivel,estado,tiempo_restante,botones_disponibles)
-                #Para que no se pise con el cambio de nivel
-                if cambio is not None:
-                    cambio_nivel = cambio
-                    running=False
-            if ev.type == pygame.KEYDOWN:
-                if ev.key == pygame.K_RETURN:
+                elif tipo == "ubicar":
+                    estado["mensaje"] = f"La letra '{valor.upper()}' está en todas las palabras"
+                    estado["mensaje_timer"] = 3
 
-                    if len(palabra_actual) > 0:
-
-                        palabra = "".join(palabra_actual)
-
-                        resultado = procesar_palabra_pygame(estado, palabra)
-
-                        if resultado == "valida":
-                            mensaje = "Palabra válida"
-                        elif resultado == "repetida":
-                            mensaje = "Palabra repetida"
-                        else:
-                            mensaje = "Palabra inválida"
-
-                        palabra_actual.clear()
-                        botones_usados.clear()
-
-                        for b in botones_disponibles:
-                            b["activa"] = True
+                elif tipo == "nivel":
+                    estado["mensaje"] = f"Resultado del comodín: {valor.upper()}"
+                    estado["mensaje_timer"] = 2
+                    cambio_nivel = valor
+                    running = False
+            # tiempo
         tiempo_restante = actualizar_tiempo(tiempo_restante, dt)
 
+            # Lo que te aparece en el fin de juego
         fin, msg = verificar_fin_juego(estado, tiempo_restante)
-
         if fin:
-            running = False
             mensaje = msg
-        # SOLO si perdió del todo
-        if estado["errores"] >= 5:
-            fin_juego = True
+            running = False
 
+            #
         mensaje_timer = dibujar_juego(PANTALLA,estado,botones_disponibles,botones_usados,FUENTE_PEQUENA,FUENTE_TIMER,tiempo_restante,mensaje,mensaje_timer,dt)
-
-        dibujar_comodines(PANTALLA, botones_comodines, comodines_nivel, FUENTE_PEQUENA)
-
+        dibujar_botones_accion(PANTALLA, botones_accion, FUENTE_PEQUENA)
+        dibujar_comodines(PANTALLA, botones_comodines, comodines_usados, FUENTE_PEQUENA)
         controlar_audio(keys, PANTALLA, sonido_arriba, sonido_abajo, sonido_mute, sonido_max)
 
         pygame.display.update()
 
-    return estado["puntaje"], estado["errores"], fin_juego, cambio_nivel
+    return estado["puntaje"], estado["errores"], False, cambio_nivel
 
+
+def manejar_eventos_partida(ev, estado, botones_disponibles, botones_usados,botones_accion, botones_comodines, comodines_usados):
+
+    cambio_nivel = None
+    
+    # ===== DETECCION DE EVENTOS =====
+    if ev.type == pygame.MOUSEBUTTONDOWN:
+        pos = pygame.mouse.get_pos()
+
+        manejar_click_botones(pos, botones_disponibles, botones_usados, estado["palabra_actual"])
+        manejar_click_usados(pos, botones_disponibles, botones_usados, estado["palabra_actual"])
+
+        for b in botones_accion:
+            if b["rect"].collidepoint(pos):
+                manejar_accion_jugador(b["accion"], estado, botones_usados,  botones_disponibles)
+        
+        # solo detecta comodín
+        resultado = manejar_click_comodines(pos, botones_comodines, comodines_usados, estado)
+
+        if resultado is not None:
+            cambio_nivel = resultado
+    elif ev.type == pygame.KEYDOWN:
+        accion = detectar_accion_teclado(ev)
+
+        if accion is not None:
+            manejar_accion_jugador(accion,estado,botones_usados,botones_disponibles)
+
+    return cambio_nivel
 
 # ========== FLUJO DE NIVELES Y PARTIDAS ==========
 def jugar_toda_la_partida(max_niveles: int = 5, max_partidas_por_nivel: int = 3):
@@ -168,21 +203,13 @@ def jugar_toda_la_partida(max_niveles: int = 5, max_partidas_por_nivel: int = 3)
         
         nivel = niveles[i_nivel]
         partidas_jugadas = 0
-        comodines_nivel = {
-                "tiempo": False,
-                "errores": False,
-                "nivel": False
-            }
         # jugar hasta max_partidas_por_nivel o hasta agotar partidas
         while partidas_jugadas < max_partidas_por_nivel and partidas_jugadas < len(nivel["partidas"]):
-            # obtener partida aleatoria sin repetir
-            # 👇 COMODINES SE RESETEAN SOLO AL CAMBIAR NIVEL
+            # obtener partida aleatoria sin repetir, los comodines se resetean al pasar de nivel
             
             datos = buscar_partida_aleatoria_sin_repetir(nivel)
-            puntos,errores,game_over,cambio_nivel = ejecutar_partida_pygame(datos,comodines_nivel)
+            puntos,errores,game_over,cambio_nivel = ejecutar_partida_pygame(datos)
             
-            if cambio_nivel == "usar_comodin":
-                cambio_nivel = usar_comodin_nivel(i_nivel, 0)
             # mostrar pantalla de resumen y esperar tecla para continuar
             mostrar_resumen_partida(puntos,errores)
             puntaje_total += puntos
@@ -230,8 +257,9 @@ def mostrar_resumen_partida(puntos_obtenidos: int,errores:int):
         dibujar_texto_centrado(PANTALLA, f"Puntos de esta partida: {puntos_obtenidos}", FUENTE, (255, 255, 255), 200)
         dibujar_texto_centrado(PANTALLA, f"Errores de esta partida: {errores}", FUENTE, (255, 255, 255), 260)
         dibujar_texto_centrado(PANTALLA, "Presiona cualquier tecla para continuar...", FUENTE_PEQUENA, (200, 200, 200), 340)
-        pygame.display.update()
         R_CLOCK.tick(30)
+        pygame.display.update()
+        
 
 #Te muestro lo que datos y diseño que hay al finalizar el juego
 def mostrar_resumen_final(puntaje_total, errores_total):
@@ -248,11 +276,9 @@ def mostrar_resumen_final(puntaje_total, errores_total):
         dibujar_texto_centrado(PANTALLA, f"Puntaje total: {puntaje_total}", FUENTE, (255, 255, 255), 200)
         dibujar_texto_centrado(PANTALLA, f"errores total: {errores_total}", FUENTE, (255, 255, 255), 260)
         dibujar_texto_centrado(PANTALLA, "Juego finalizado. Presiona cualquier tecla para salir.", FUENTE_PEQUENA, (200, 200, 200), 320)
-        pygame.display.update()
         R_CLOCK.tick(30)
-
+        pygame.display.update()
 # max nivel 5 y max partidas 3
-# ========== START ==========
 if __name__ == "__main__":
     jugar_toda_la_partida(max_niveles=5, max_partidas_por_nivel=1)
     pygame.quit()

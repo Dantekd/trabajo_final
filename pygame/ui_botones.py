@@ -40,7 +40,6 @@ def manejar_click_usados(pos, botones_disponibles, botones_usados, palabra_actua
     while i < len(botones_usados):
 
         boton = botones_usados[i]
-        #
         if boton["rect"].collidepoint(pos):
 
             letra = boton["letra"]
@@ -59,23 +58,48 @@ def manejar_click_usados(pos, botones_disponibles, botones_usados, palabra_actua
 def crear_botones_comodines():
 
     botones = []
-    #Boton de comodin de sumarle tiempo
+    #Comodin revela parcialmente la palabra
     botones.append({
-        "rect": pygame.Rect(200, 400, 120, 40),
-        "texto": "Tiempo",
-        "tipo": "tiempo"
+        "rect": pygame.Rect(150, 400, 170, 40),
+        "texto": "Revelar",
+        "tipo": "revelar"
     })
-    #Boton del comodin de reset
+    #Comodin ubica letra
     botones.append({
-        "rect": pygame.Rect(350, 400, 120, 40),
-        "texto": "errores",
-        "tipo": "errores"
+        "rect": pygame.Rect(360, 400, 140, 40),
+        "texto": "Ubicar letra",
+        "tipo": "ubicar"
     })
+
     #Boton del comodin 50/50
     botones.append({
-        "rect": pygame.Rect(500, 400, 120, 40),
+        "rect": pygame.Rect(530, 400, 120, 40),
         "texto": "Nivel",
         "tipo": "nivel"
+    })
+
+    return botones
+
+
+def crear_botones_accion():
+    botones = []
+
+    botones.append({
+        "rect": pygame.Rect(150, 550, 120, 40),
+        "accion": "shuffle",
+        "texto": "Shuffle"
+    })
+
+    botones.append({
+        "rect": pygame.Rect(300, 550, 120, 40),
+        "accion": "clear",
+        "texto": "Clear"
+    })
+
+    botones.append({
+        "rect": pygame.Rect(450, 550, 120, 40),
+        "accion": "submit",
+        "texto": "Submit"
     })
 
     return botones

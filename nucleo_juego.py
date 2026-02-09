@@ -1,11 +1,10 @@
 # MODULO CON TODA LA LOGICA DEL JUEGO.
 
 import random
-from validaciones import *
-from cuenta_regresiva import *
-from mecanicas import normalizar_lista_base_minusculas, quitar_duplicados_lista_a_set, normalizar_base_str, desordenar_letras, generar_guiones, ajustar_letras
-from numericas import sumar_puntaje, acumular_ingresos_incorrectos
-from comodines import obtener_comodin_cambiar_partida
+
+from mecanicas import normalizar_lista_base_minusculas, quitar_duplicados_lista_a_set, desordenar_letras, ajustar_letras
+
+
 
 
 
@@ -31,46 +30,6 @@ def preparar_partida(datos_partida: dict) -> tuple:
 
     # devuelvo tupla, para seguir trabajando.
     return base_set, base_lista, palabras_validas
-
-
-
-
-def preparar_estado_partida(datos_partida: dict) -> dict:
-    """
-    Construye el estado completo de una partida a partir de los datos de base.
-    Cada partida conoce su nivel y si puede usar comodín cambiar partida.
-    """
-    # Preparar tuplas y listas de letras y palabras válidas
-    base_set, base_lista, palabras_validas = preparar_partida(datos_partida)
-
-    # Guiones para mostrar la palabra base
-    guiones = generar_guiones(datos_partida["base"])
-
-    # Desordenar letras para mostrar
-    letras = desordenar_letras(base_lista)
-    letras_mostrar = ajustar_letras(letras)
-    
-
-    # Construir estado
-    estado = {
-        "base_lista": base_lista,
-        "base_set": base_set,
-        "palabras_validas": palabras_validas,
-        "puntaje": 0,
-        "errores": 0,
-        "palabras_encontradas": [],
-        "palabras_ingresadas": [],
-        "comodin_revelar": True,
-        "comodin_ubicar": True,
-        "guiones": guiones,
-        "letras_mostrar": letras_mostrar,
-    }
-
-    # Comodín cambiar partida por nivel
-    estado["comodin_cambiar_partida"] = obtener_comodin_cambiar_partida(datos_partida)
-
-    return estado
-
 
 
 

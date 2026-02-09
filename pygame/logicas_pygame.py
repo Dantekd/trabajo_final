@@ -1,47 +1,28 @@
-import pygame
+
 import random
 from pygame.locals import *
+from comodines import comodin_revelar_palabra,comodin_ubicar_letra,comodin_nivel
 
 
+#Actualiza el tiempo en cada partida
 def actualizar_tiempo(tiempo_restante, dt):
 
     nuevo_tiempo = tiempo_restante - dt
 
     return nuevo_tiempo
 
-def obtener_evento_tecla():
-    """Devuelve una letra presionada o '__SALIR__' o None."""
-    salida = None  # Valor por defecto
-    eventos = pygame.event.get()
 
-    for evento in eventos:
-        if evento.type == QUIT:
-            salida = "__SALIR__"
-            break
-        else:
-            if evento.type == KEYDOWN:
-                if evento.key == K_ESCAPE:
-                    salida = "__SALIR__"
-                    break
-                else:
-                    tecla = evento.unicode
-                    if tecla.isalpha():
-                        salida = tecla.upper()
-                        break
-    return salida  
+#Esto le pone condiciones para que el juego termine mostrandote la pantalla de fin y un mensaje
 
 def verificar_fin_juego(estado, tiempo_restante):
 
     fin = False
     mensaje = ""
-
+    
     if tiempo_restante <= 0:
         fin = True
         mensaje = "Se acabó el tiempo"
 
-    if estado.get("errores", 0) >= estado.get("intentos_maximos", 5):
-        fin = True
-        mensaje = "Máximos errores alcanzados"
 
     if len(estado["palabras_encontradas"]) >= len(estado["palabras_validas"]):
         fin = True
@@ -50,46 +31,52 @@ def verificar_fin_juego(estado, tiempo_restante):
     return fin, mensaje
 
 
-def manejar_click_comodines(pos, botones, comodines_nivel, estado, tiempo_restante,botones_disponibles):
 
-    cambio_nivel = None
+def obtener_comodin_cambiar_partida(datos_partida):
+    """Extrae el comodín desde el nivel de la partida, con validación."""
     
-    for b in botones:
+    resultado = False
+
+    nivel = datos_partida.get("nivel")
+    if nivel != None:
+        valor = nivel.get("comodin_cambiar_partida")
+        if valor != None:
+            resultado = valor
+
+    return resultado
+   
+
+def manejar_click_comodines(pos, botones_comodines, comodines_usados, estado):
+    """
+    Maneja el click sobre los botones de comodines.
+    Devuelve una tupla (tipo, valor) o None.
+    """
+    
+    resultado = None
+
+    for b in botones_comodines:
         if b["rect"].collidepoint(pos):
 
-            nombre = b["tipo"]
-            #Suma 30 segudno al tiempo
-            if nombre == "tiempo" and not comodines_nivel["tiempo"]:
-                tiempo_restante += 30
-                comodines_nivel["tiempo"] = True
-            #Resea los errores de la partida mientras que aun no hayas llegado a los 5 errores
-            elif nombre == "errores" and not comodines_nivel["errores"]:
-                estado["errores"] = 0
-                comodines_nivel["errores"] = True
-                b["activa"] = False
-            #sirve para definir si sube o baja de nivel cuando usa el comodin
-            elif nombre == "nivel" and not comodines_nivel["nivel"]:
+            tipo = b["tipo"]
 
-                comodines_nivel["nivel"] = True
+            if comodines_usados[tipo]:
+                break
 
-                cambio_nivel = "usar_comodin"
+            if tipo == "revelar":
+                palabra = comodin_revelar_palabra(estado)
+                comodines_usados[tipo] = True
+                resultado = ("revelar", palabra)
 
-    return tiempo_restante, cambio_nivel
+            elif tipo == "ubicar":
+                letra = comodin_ubicar_letra(estado)
+                comodines_usados[tipo] = True
+                resultado = ("ubicar", letra)
 
-#Es la funcion complementaria de el comodin 50/50
-def usar_comodin_nivel(nivel_actual, nivel_minimo):
+            elif tipo == "nivel":
+                accion = comodin_nivel()
+                comodines_usados[tipo] = True
+                resultado = ("nivel", accion)
 
-    cambio = ""
+            break
 
-    numero = random.randint(0, 1)
-
-    if numero == 1:
-        cambio = "subir"
-
-    else:
-        if nivel_actual > nivel_minimo:
-            cambio = "bajar"
-        else:
-            cambio = "reset"
-
-    return cambio
+    return resultado

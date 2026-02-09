@@ -106,63 +106,24 @@ def normalizar_base_str(palabra: str) -> list:
     return resultado
 
 
-def generar_guiones(palabra: str) -> str:
-    """Funcion para generar los guiones de la palabra "base".
+def generar_guiones(palabra_base: str) -> list:
+    """
+    Genera una lista de guiones bajos según la longitud de la palabra base.
 
     Args:
-        palabra (str): La palabra a "ocultar" con guiones.
+        palabra_base (str): Palabra base de la partida.
 
     Returns:
-        str: El str conformado por guiones.
+        list: Lista de "_" con la misma longitud que la palabra.
     """
-    # creo una cadena vacia.
-    resultado = ""
+    guiones = []
 
-    # recorro la palabra:
-    for i in range(len(palabra)):
-        # concateno la cadena vacia con los guiones
-        resultado += "_ "
-    # devuelvo ->
-    return resultado.strip()  # quita el espacio final
+    for _ in palabra_base:
+        guiones.append("_")
 
+    return guiones
 
-
-def ordenar_minimo(lista):
-    """Consigue el minimo 
-
-    Args:
-        lista (_type_): ordena de menor a mayor
-
-    Returns:
-        _type_: devuelve el minimo
-    """
-    i = 0
-    minimo = 0  # arranco suponiendo que el mínimo es el primero
-
-    while i < len(lista):
-        if lista[i] < lista[minimo]:
-            minimo = i
-        i += 1
-
-    return minimo
-
-def imprimir_lista(lista):
-
-    for i in range(len(lista)):
-        print(lista[i])
-        
-
-def buscar_palabra_ya_ingresada(lista, palabra):
-    i = 0
-    repetida = False
-
-    for i in range(len(lista)):
-        if lista[i] == palabra:
-            repetida = True
-       
-       
-    return repetida
-
+    
 
 
 
