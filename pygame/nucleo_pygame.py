@@ -9,6 +9,7 @@ def crear_estado_pygame(base_lista, palabras_validas, perfil):
         "palabras_validas": palabras_validas,
         "palabras_encontradas": [],
         "palabras_ingresadas": [],
+        "palabras_invalidas": [], 
         "palabra_actual": [],
         "puntaje": 0,
         "errores": 0,
@@ -160,6 +161,7 @@ def verificar_fin_partida(palabras_encontradas: int, total_palabras: int) -> boo
     """Funcion que verifica el estado de la partida.
 
     Args:
+
         errores (int): Los errores acumulados.
         max_errores (int): El maximo de errores.
         palabras_encontradas (int): Las palabras encontradas.

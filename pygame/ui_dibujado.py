@@ -1,11 +1,9 @@
 import pygame
-
 pygame.font.init()
-PANTALLA = pygame.display.set_mode((900, 600))
 FUENTE = pygame.font.SysFont("arial", 32)
-FUENTE_GRANDE = pygame.font.SysFont("arial", 48)
-FUENTE_PEQUENA = pygame.font.SysFont(None, 32)
-
+FUENTE_GRANDE = pygame.font.SysFont("arial", 45)
+FUENTE_PEQUENA = pygame.font.SysFont(None, 25)
+FUENTE_TITULO=pygame.font.SysFont("Old English Text",90)
 
 def dibujar_botones_disponibles(pantalla, botones, fuente):
     for b in botones:
@@ -64,11 +62,11 @@ def dibujar_juego(pantalla,estado,botones_disponibles,botones_usados,fuente_pequ
 
     dibujar_botones_disponibles(pantalla, botones_disponibles, fuente_pequena)
     dibujar_botones_usados(pantalla, botones_usados, fuente_pequena)
-
-    pantalla.blit(
-        fuente_timer.render(f"Tiempo: {int(tiempo_restante)}", True, (255,255,255)),
-        (740,20)
-    )
+    if estado["tdah"]:
+            pantalla.blit(
+                fuente_timer.render(f"Tiempo: {int(tiempo_restante)}", True, (255,255,255)),
+                (740,20)
+            )
 
     pantalla.blit(
         fuente_pequena.render("Errores: " + str(estado["errores"]), True, (255,180,180)),
@@ -83,19 +81,25 @@ def dibujar_juego(pantalla,estado,botones_disponibles,botones_usados,fuente_pequ
         ),
         (20,20)
     )
-    if estado["mensaje_timer"] > 0:
-        dibujar_texto_centrado(PANTALLA,estado["mensaje"],FUENTE_PEQUENA,(255, 255, 0),180)
+    pantalla.blit(
+    fuente_pequena.render(
+        f"Nivel: {estado['nivel_actual']}  |  Partida: {estado['partida_actual']}",
+        True,
+        (255,255,255)
+    ),
+    (680, 60)
+    )
+    if estado["tdah"] and estado["mensaje_timer"] > 0:
+        dibujar_texto_centrado(pantalla,estado["mensaje"],FUENTE_PEQUENA,(255, 255, 0),180)
         estado["mensaje_timer"] -= dt
 
-    if mensaje_timer > 0:
+    if estado["tdah"] and mensaje_timer > 0:
         pantalla.blit(
             fuente_pequena.render(mensaje, True, (255,255,0)),
             (340,25)
         )
-        mensaje_timer -= dt
-    
-    if "mensaje" in estado:
-        dibujar_texto (pantalla,estado["mensaje"],fuente_pequena,(255, 255, 0),200,360)
+        
+    mensaje_timer -= dt
 
     return mensaje_timer
 #Esto va a aparecer cuando se clickean los comodines
@@ -145,6 +149,7 @@ COLOR_FONDO = (30, 30, 30)
 COLOR_TEXTO = (255, 255, 255)
 FUENTE_TAM = 32
 
+
 #Se usa en la demo para mostrar las palabras que se usan durante la partida
 def dibujar_palabras_objetivo(pantalla, palabras, fuente):
 
@@ -159,41 +164,35 @@ def dibujar_palabras_objetivo(pantalla, palabras, fuente):
         y += 28
 
 
-#Con esto se hace lo estetico del login
-
 
 
 
 # =========================================================
 # DIBUJAR CONFIGURACION
 # =========================================================
-def dibujar_configuracion(pantalla):
+def dibujar_configuracion(pantalla,FUENTE,botones):
 
-    pantalla.fill((200, 200, 255))
+    pantalla.fill((250,250,250))
 
     # Título centrado
-    dibujar_texto(pantalla, "CONFIGURACIÓN ", FUENTE_GRANDE, (0, 0, 0),260, 80)
+    dibujar_texto(pantalla, "Descubre la palabra ", FUENTE_TITULO, (0, 0, 0),100, 70)
+    dibujar_texto(pantalla, "MODO:", FUENTE_GRANDE, (0, 0, 0),50, 270)
 
     # Botones
-    pygame.draw.rect(pantalla, (0, 200, 0), (250, 250, 200, 80))
-    pygame.draw.rect(pantalla, (200, 0, 0), (500, 250, 200, 80))
+    for b in botones.values():
+        pygame.draw.rect(pantalla, (0, 0, 0), b["rect"], border_radius=12)
+        texto = FUENTE.render(b["texto"], True, (255, 255, 255))
+        pantalla.blit(texto, texto.get_rect(center=b["rect"].center))
 
-    # Texto dentro de botones
-    dibujar_texto(pantalla, "ESTANDAR", FUENTE, (0,0,0),260,280)
-    dibujar_texto(pantalla, "DALTONICO", FUENTE, (0,0,0),510,280)
+    dibujar_texto(pantalla, "Controles del Volumen", FUENTE_GRANDE, (0, 0, 0),220, 440)
 
-    dibujar_texto(pantalla, "VOLUMEN", FUENTE_GRANDE, (0, 0, 0),360, 400)
+    dibujar_texto(pantalla, "Mute: m ", FUENTE, (224,168,1),100,520)
 
-    dibujar_texto(pantalla, "Mute: m ", FUENTE, (0,0,0),100,520)
+    dibujar_texto(pantalla, "Subir: 9 ", FUENTE, (224,168,1),300,520)
 
-    dibujar_texto(pantalla, "Subir: 0 ", FUENTE, (0,0,0),300,520)
+    dibujar_texto(pantalla, "Bajar: 0 ", FUENTE, (224,168,1),500,520)
 
-    dibujar_texto(pantalla, "Bajar: 9 ", FUENTE, (0,0,0),500,520)
-
-    dibujar_texto(pantalla, "MAX: , ", FUENTE, (0,0,0),700,520)
-
-
-    pygame.display.flip()
+    dibujar_texto(pantalla, "Maximo: , ", FUENTE, (224,168,1),700,520)
 
 
 def dibujar_texto(pantalla, texto, fuente, color, x, y):
@@ -216,16 +215,22 @@ def dibujar_login(pantalla,user_text, pass_text, activo_user, activo_pass):
 
     pygame.draw.rect(pantalla, color_user, (300, 200, 300, 40), 2)
     pygame.draw.rect(pantalla, color_pass, (300, 300, 300, 40), 2)
-    dibujar_texto(pantalla, "Usuario:", FUENTE, (0,0,0), 200, 205)
+    dibujar_texto(pantalla, "Usuario:", FUENTE, (0,0,0), 200, 200)
     dibujar_texto(pantalla, "Password:", FUENTE, (0,0,0),170, 305)
     dibujar_texto(pantalla, user_text, FUENTE, (0,0,0), 300, 205)  # ajustar Y si querés
     dibujar_texto(pantalla, "*" * len(pass_text), FUENTE, (0,0,0), 305, 305)  # ajustar Y si querés
-    dibujar_texto( pantalla,"ENTER = Ingresar / Crear",FUENTE,(80, 80, 80),305,450)
+    dibujar_texto( pantalla,"Ingrese Enter si quiere loguearse. ",FUENTE_PEQUENA,(80, 80, 80),320,500)
+    dibujar_texto( pantalla,"Si quiere registrarse porfavor complete los campos con lo deseado y toque el boton.",FUENTE_PEQUENA,(80, 80, 80),100,550)
 
-    pygame.display.flip()
 
+#esto es algo mas puntual que se usa en acciones_jugador
 def dibujar_botones_accion(pantalla, botones, fuente):
     for b in botones:
         pygame.draw.rect(pantalla, (80, 80, 80), b["rect"])
         texto = fuente.render(b["texto"], True, (255, 255, 255))
         pantalla.blit(texto, b["rect"].move(10, 5))
+#Esto es una funcion mas generica que se usa en login
+def dibujar_botones(pantalla, boton, fuente):
+    pygame.draw.rect(pantalla, (80,80,80), boton["rect"])
+    texto = fuente.render(boton["texto"], True, (255,255,255))
+    pantalla.blit(texto, boton["rect"].move(10, 10))

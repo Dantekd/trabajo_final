@@ -1,6 +1,5 @@
 # acciones_jugador.py
 from numericas import sumar_puntaje, acumular_ingresos_incorrectos
-from nucleo_juego import desordenar_letras
 from nucleo_pygame import procesar_palabra_pygame,validar_palabra
 import random
 import pygame
@@ -56,7 +55,18 @@ def accion_submit(estado):
 def manejar_accion_jugador(accion, estado, botones_usados,botones_disponibles):
     if accion == "submit":
         palabra = "".join(estado["palabra_actual"])
-        procesar_palabra_pygame(estado,palabra)
+        resultado=procesar_palabra_pygame(estado, palabra)
+        if resultado == "repetida":
+            estado["mensaje"] = "Ya ingresaste esa palabra"
+            estado["mensaje_timer"] = 2
+
+        elif resultado == "invalida":
+            estado["mensaje"] = "Palabra incorrecta"
+            estado["mensaje_timer"] = 2
+
+        elif resultado == "valida":
+            estado["mensaje"] = "¡Palabra correcta!"
+            estado["mensaje_timer"] = 2
 
         for boton_usado in botones_usados:
             letra = boton_usado["letra"]

@@ -1,31 +1,19 @@
-# =========================================================
-# LOGIN + CONFIGURACION EN PYGAME (MODULARIZADO)
-# SIN TRY/EXCEPT
-# UN SOLO RETURN POR FUNCION
-# TODO COMENTADO
-# =========================================================
-
 import pygame
 import json
 from ui_dibujado import *
+from ui_botones import *
 
-# =========================================================
-# RUTA JSON (USA TU RUTA REAL)
-# =========================================================
+
 RUTA_JSON = r"C:/Users/Usuario/Desktop/trabajo_final/Final/pygame/datos.json"
 
-# =========================================================
-# INICIALIZAR PYGAME
-# =========================================================
+
 pygame.init()
-pygame.init()
+
 PANTALLA = pygame.display.set_mode((900, 600))
 pygame.display.set_caption("Login Juego")
 FUENTE = pygame.font.SysFont("arial", 28)
 
-# =========================================================
-# FUNCION: CARGAR JSON
-# =========================================================
+
 def cargar_datos_json():
     archivo = open(RUTA_JSON, "r")
     datos = json.load(archivo)
@@ -33,45 +21,41 @@ def cargar_datos_json():
     return datos
 
 
-# =========================================================
-# FUNCION: GUARDAR JSON
-# =========================================================
 def guardar_datos_json(datos):
     archivo = open(RUTA_JSON, "w")
     json.dump(datos, archivo, indent=4)
     archivo.close()
 
-# =========================================================
-# FUNCION: BUSCAR USUARIO EXISTENTE
-# =========================================================
+# Busca el usuarios dentro de json
+
 def buscar_usuario(datos, nombre, contra):
     indice_encontrado = -1
 
-    for i in range(len(datos["usuario"])):
-        if datos["usuario"][i]["nombre_usuario"] == nombre and datos["usuario"][i]["contrasena"] == contra:
+    for i in range(len(datos["usuarios"])):
+        if datos["usuarios"][i]["nombre_usuario"] == nombre and datos["usuarios"][i]["contrasena"] == contra:
             indice_encontrado = i
 
     return indice_encontrado
 
 
-# =========================================================
-# FUNCION: CREAR NUEVO USUARIO
-# =========================================================
+#Crea un nuevo usuarios
 def crear_usuario(datos, nombre, contra):
 
-    datos["usuario"].append({
+    datos["usuarios"].append({
         "nombre_usuario": nombre,
-        "contrasena": contra
+        "contrasena": contra,
+        "modo": "normal",
+        "accesibilidad": {
+            "tdah": False
+        },
+        "stats": {
+            "puntaje_total": 0,
+            "errores_totales": 0,
+            "partidas_jugadas": 0
+        }
     })
 
-    datos["stats"].append({
-        "puntaje": 0,
-        "partidas_guardadas": 0,
-        "configuracion": "estandar",
-        "errores": 0
-    })
-    #fijarte como reemplazarlo
-    return len(datos["usuario"]) - 1
+    return len(datos["usuarios"]) - 1
 
 
 # =========================================================
@@ -112,9 +96,14 @@ def manejar_eventos_login(evento, user_text, pass_text, activo_user, activo_pass
 # =========================================================
 # PANTALLA LOGIN PRINCIPAL
 # =========================================================
+
 def pantalla_login():
 
     datos = cargar_datos_json()
+    normalizar_usuarios(datos)
+    guardar_datos_json(datos)
+
+    botones = crear_botones_login()
 
     user_text = ""
     pass_text = ""
@@ -130,35 +119,41 @@ def pantalla_login():
             if evento.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-
             user_text, pass_text, activo_user, activo_pass = manejar_eventos_login(evento, user_text, pass_text, activo_user, activo_pass)
             
+              # ===== ENTER = SOLO LOGIN =====
             if evento.type == pygame.KEYDOWN and evento.key == pygame.K_RETURN:
-
-                if user_text.strip() == "" or pass_text.strip() == "":
-                    mensaje_error = "Usuario y contraseña no pueden estar vacíos."
+                indice = buscar_usuario(datos, user_text, pass_text)
+                if indice != -1:
+                    usuario_logueado = indice
+                    corriendo = False
                 else:
-                    indice = buscar_usuario(datos, user_text, pass_text)
-                    if indice != -1:
-                        # Usuario existe y contraseña correcta
-                        usuario_logueado = indice
-                        corriendo = False
+                    mensaje_error = "Usuario o contraseña incorrectos"
+            
+            
+            if evento.type == pygame.MOUSEBUTTONDOWN:  
+            
+                #Registro
+                if botones["registro"]["rect"].collidepoint(evento.pos):
+                    if user_text == "" or pass_text == "":
+                        mensaje_error = "Campos vacíos"
                     else:
-                        # Verificar si el usuario ya existe por nombre (evitar duplicados)
-                        nombres_existentes = [u["nombre_usuario"] for u in datos["usuario"]]
-                        if user_text in nombres_existentes:
-                            mensaje_error = "Usuario ya existe, contraseña incorrecta."
+                        nombres = [u["nombre_usuario"] for u in datos["usuarios"]]
+                        if user_text in nombres:
+                            mensaje_error = "Usuario ya existe"
                         else:
-                            # Crear nuevo usuario
-                            nuevo = crear_usuario(datos, user_text, pass_text)
+                            usuario_logueado = crear_usuario(datos, user_text, pass_text)
                             guardar_datos_json(datos)
-                            usuario_logueado = nuevo
                             corriendo = False
 
         # Dibujar login y mensaje de error
         dibujar_login(PANTALLA, user_text, pass_text, activo_user, activo_pass)
+        dibujar_botones(PANTALLA, botones["registro"], FUENTE)
+
         if mensaje_error:
             dibujar_texto(PANTALLA, mensaje_error, FUENTE, (255, 0, 0), 300, 370)
+    
+        pygame.display.update()
 
     return usuario_logueado
 
@@ -184,39 +179,59 @@ def manejar_eventos_configuracion(evento, config):
 def pantalla_configuracion(indice_usuario):
 
     datos = cargar_datos_json()
-    for stat in datos["stats"]:
-        if "configuracion" not in stat:
-            stat["configuracion"] = "estandar"
+    normalizar_usuarios(datos)
+    guardar_datos_json(datos)
+    botones = crear_botones_configuracion()
 
-    config = datos["stats"][indice_usuario]["configuracion"]
-
+    modo_elegido = datos["usuarios"][indice_usuario]["modo"]
     corriendo = True
 
+    
     while corriendo:
 
         for evento in pygame.event.get():
-
             if evento.type == pygame.QUIT:
                 pygame.quit()
                 exit()
 
-            config = manejar_eventos_configuracion(evento, config)
+            if evento.type == pygame.MOUSEBUTTONDOWN:
 
-            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_RETURN:
-                corriendo = False
+                if botones["normal"]["rect"].collidepoint(evento.pos):
+                    datos["usuarios"][indice_usuario]["modo"] = "normal"
+                    datos["usuarios"][indice_usuario]["accesibilidad"]["tdah"] = False
+                    modo_elegido = "normal"
+                    corriendo = False
 
-        dibujar_configuracion(PANTALLA)
+                elif botones["tdah"]["rect"].collidepoint(evento.pos):
+                    datos["usuarios"][indice_usuario]["modo"] = "tdah"
+                    datos["usuarios"][indice_usuario]["accesibilidad"]["tdah"] = True
+                    modo_elegido = "tdah"
+                    corriendo = False
 
-    datos["stats"][indice_usuario]["configuracion"] = config
+        dibujar_configuracion(PANTALLA, FUENTE, botones)
+        pygame.display.update()
+
     guardar_datos_json(datos)
+    return modo_elegido
+#La u representa a el usuario y la función sirve para asegurar que todos los usuarios tengan la misma estructura
+def normalizar_usuarios(datos):
+    for u in datos["usuarios"]:
 
-    return config
+        if "modo" not in u:
+            u["modo"] = "normal"
 
+        if "accesibilidad" not in u:
+            u["accesibilidad"] = {"tdah": False}
 
-# =========================================================
-# MAIN DEMO
-# =========================================================
+        if "tdah" not in u["accesibilidad"]:
+            u["accesibilidad"]["tdah"] = False
 
+        if "stats" not in u:
+            u["stats"] = {
+                "puntaje_total": 0,
+                "errores_totales": 0,
+                "partidas_jugadas": 0
+            }
 def main():
 
     indice = pantalla_login()

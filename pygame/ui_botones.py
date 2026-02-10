@@ -103,3 +103,26 @@ def crear_botones_accion():
     })
 
     return botones
+
+#“Los botones no se modelaron solo como elementos gráficos, sino como entidades lógicas.
+#Por eso, cuando se comportan como un conjunto homogéneo se usan listas, y cuando representan decisiones exclusivas se usan diccionarios.”
+def crear_botones_login():
+    return {
+        "registro": {
+            "rect": pygame.Rect(350, 390, 200, 50),
+            "texto": "Crear usuario"
+        }
+    }
+
+
+def crear_botones_configuracion():
+    return {
+        "normal": {
+            "rect": pygame.Rect(250, 250, 200, 80),
+            "texto": "Modo normal"
+        },
+        "tdah": {
+            "rect": pygame.Rect(550, 250, 200, 80),
+            "texto": "Modo TDAH"
+        }
+    }
