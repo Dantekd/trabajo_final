@@ -5,7 +5,7 @@ import random
 import pygame
 from ui_botones import *
 
-
+#Lo que sucede al accionar shuffle
 def accion_shuffle(letras):
     letras_mezcladas = list(letras)
     random.shuffle(letras_mezcladas)
@@ -18,6 +18,7 @@ def accion_clear(estado):
 
 
 def accion_submit(estado):
+    #join se usa para unir una lista con un texto
     palabra = "".join(estado["palabra_actual"]).lower()
     resultado = ""
 
@@ -51,7 +52,7 @@ def accion_submit(estado):
     estado["ultimo_resultado"] = resultado
 
     return estado
-
+#Esto sirve para al ingresar la palabra que sucede
 def manejar_accion_jugador(accion, estado, botones_usados,botones_disponibles):
     if accion == "submit":
         palabra = "".join(estado["palabra_actual"])
@@ -101,12 +102,7 @@ def manejar_accion_jugador(accion, estado, botones_usados,botones_disponibles):
 
     return estado
 
-
 def detectar_accion_teclado(evento):
-    """
-    Traduce una tecla presionada a una acción del juego.
-    Devuelve un string con la acción o None.
-    """
 
     accion = None
 

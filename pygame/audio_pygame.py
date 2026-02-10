@@ -1,5 +1,5 @@
 import pygame
-
+#Panel de control del audio
 def controlar_audio(keys, pantalla, sonido_arriba, sonido_abajo, sonido_mute, sonido_max):
     
     # Bajar volumen

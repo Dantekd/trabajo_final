@@ -1,4 +1,5 @@
 import pygame
+
 #Dimensiones del boton que esta
 def crear_botones_letras_csv(letras):
     botones = []
@@ -80,7 +81,7 @@ def crear_botones_comodines():
 
     return botones
 
-
+#Crea los botones por los cuales se hicieron los que tiene influencia en los botones de las letras  
 def crear_botones_accion():
     botones = []
 
@@ -104,8 +105,8 @@ def crear_botones_accion():
 
     return botones
 
-#“Los botones no se modelaron solo como elementos gráficos, sino como entidades lógicas.
-#Por eso, cuando se comportan como un conjunto homogéneo se usan listas, y cuando representan decisiones exclusivas se usan diccionarios.”
+
+#Esta asi el return porque la funcion se comportan como un conjunto homogéneo de lista o diccionario según el contexto
 def crear_botones_login():
     return {
         "registro": {
@@ -114,7 +115,7 @@ def crear_botones_login():
         }
     }
 
-
+#crea los botones de Modo normal y Modo TDAH
 def crear_botones_configuracion():
     return {
         "normal": {

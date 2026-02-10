@@ -1,8 +1,11 @@
-#CONTADOR DE COSAS PARA VER: 2
+from login_pygame import *
+from nucleo_juego import preparar_partida
 from numericas import sumar_puntaje, acumular_ingresos_incorrectos
+from ui_botones import *
+
+#Esto representaria como las reglas del juego
 
 #Esto crea lo datos que puede llegar a haber dentro del juego osea las estadisticas generales
-#Osea que serian como las reglas del juego
 def crear_estado_pygame(base_lista, palabras_validas, perfil):
     estado = {
         "base_lista": base_lista,
@@ -28,7 +31,6 @@ def crear_estado_pygame(base_lista, palabras_validas, perfil):
     return estado
 
 #Esto precesa la cantidad de palabra aun no descubiertas.
-
 def procesar_palabra_pygame(estado, palabra):
     resultado = ""
 
@@ -36,7 +38,7 @@ def procesar_palabra_pygame(estado, palabra):
     repetida = False
 
     i = 0
-    while i < len(estado["palabras_ingresadas"]):#hace que el contador disminuya de si llegaste a descubrir una palabra correcta
+    while i < len(estado["palabras_ingresadas"]):#hace que el contador aumente de si llegaste a descubrir una palabra correcta
         if estado["palabras_ingresadas"][i] == palabra_minus:
             repetida = True
         i = i + 1
@@ -67,30 +69,8 @@ def procesar_palabra_pygame(estado, palabra):
     return resultado
 
 
-def verificar_fin_pygame(estado):
-    terminado = False
-
-    if estado["errores"] >= estado["intentos_maximos"]:
-        terminado = True
-
-    if len(estado["palabras_encontradas"]) >= len(estado["palabras_validas"]):
-        terminado = True
-
-    return terminado
-
-
-#Lo nuevo 
- 
-def buscar_puede_formarse(palabra: str, letras: list) -> bool: #anotacion de Dante esto puede servir para cuando quiera reemplazar la palabra en los espaciados
-    """Funcion que a partir de una lista de letras, comprueba si una palabra existe.
-
-    Args:
-        palabra (str): La palabra a evaluar.
-        letras (list): La lista de letras a comparar.
-
-    Returns:
-        bool: Validación. True si cumple | False si no.
-    """
+#Función que a partir de una lista de letras, comprueba si una palabra existe.
+def buscar_puede_formarse(palabra: str, letras: list) -> bool:
     # genera una copia de la lista para trabajar y poder eliminar, si se requiere.
     letras_disponibles = list(letras)  
     # inicializo bandera para retornar.
@@ -109,74 +89,25 @@ def buscar_puede_formarse(palabra: str, letras: list) -> bool: #anotacion de Dan
         if letra_encontrada == False:
             bandera_validacion = False
             break
-    # retorna la validacion para trabajar.
+  
     return bandera_validacion
-
+#Busca la palabra dentro de un diccionario.
 def buscar_palabra_diccionario(palabra: str, diccionario_palabras: list) -> bool:
-    """Funcion que busca la palabra dentro de un diccionario.
-
-    Args:
-        palabra (str): La palabra a buscar.
-        diccionario (list): El diccionario donde buscar la palabra.
-
-    Returns:
-        bool: Devuelve True si la encuentra | False si no.
-    """
-    # inicializo.
     bandera_diccionario = False
 
-    # recorro, si encuentro, == True. NO COMPRENSION DE LISTAS.
     for i in range(len(diccionario_palabras)):
         if palabra == diccionario_palabras[i]:
             bandera_diccionario = True
             break
 
-    # sino, queda False.
     return bandera_diccionario
 
+#Verifica si las letras y la palabra pertenecen a las listas
 def validar_palabra(palabra: str, letras: list, diccionario: list) -> bool:
-    """Funcion que verifica si las letras y la palabra pertenecen a las listas.
+    bandera_validacion = False 
 
-    Args:
-        palabra (str): La palabra a evaluar.
-        letras (list): Letras disponibles para formar palabras.
-        diccionario (list): Lista de palabras válidas.
-
-    Returns:
-        bool: True si se puede formar y está en el diccionario | False si no.
-    """
-    # inicializo para devolver el bool.
-    bandera_validacion = False    
-    # si puede formarse con las letras.
     if buscar_puede_formarse(palabra, letras):
-        # y existe en el diccionario.
         if buscar_palabra_diccionario(palabra, diccionario):
             bandera_validacion = True
 
-    # devuelvo para seguir trabajando con el bool. -> esto sería ya para para el puntaje??
     return bandera_validacion
-
-
-def verificar_fin_partida(palabras_encontradas: int, total_palabras: int) -> bool:
-    """Funcion que verifica el estado de la partida.
-
-    Args:
-
-        errores (int): Los errores acumulados.
-        max_errores (int): El maximo de errores.
-        palabras_encontradas (int): Las palabras encontradas.
-        total_palabras (int): El total de palabras restantes.
-
-    Returns:
-        bool: Devuelve el bool. True si termina | False si sigue.
-    """
-
-    # inicializo la bandera para seguir jugando.
-    bandera_estado_partida = False
-
-    # ganar por encontrar todas las palabras.
-    if palabras_encontradas >= total_palabras:
-        bandera_estado_partida = True
-
-    # devuelvo el bool para verificar.
-    return bandera_estado_partida

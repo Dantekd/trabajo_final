@@ -42,14 +42,14 @@
         {
             "nombre_usuario": "Dante",
             "contrasena": "2007",
-            "modo": "tdah",
+            "modo": "normal",
             "accesibilidad": {
-                "tdah": true
+                "tdah": false
             },
             "stats": {
-                "puntaje_total": 305,
-                "errores_totales": 17,
-                "partidas_jugadas": 39
+                "puntaje_total": 353,
+                "errores_totales": 18,
+                "partidas_jugadas": 58
             }
         },
         {

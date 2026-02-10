@@ -38,7 +38,6 @@ pygame.mixer.music.play(-1)
 
 DIMENSION = (900, 600)
 
-
 #Icono del juego
 icono = pygame.image.load("Final/pygame/icono_juego.png")
 pygame.display.set_icon(icono)
@@ -59,36 +58,36 @@ sonido_mute = pygame.transform.scale(sonido_mute, (40, 40))
 sonido_max= pygame.image.load(os.path.join(RUTA_ACTUAL, "sonido", "maximo_volumen.png"))
 sonido_max = pygame.transform.scale(sonido_max, (40, 40))
 
-
-# ========== LOGICA DE PARTIDA (HÍBRIDA) ==========
-
-
+#Esto seria lo primero que carga al iniciar el programa
 def inicializar_partida_pygame(partida, perfil):
-
+    #Toda la parte de Json
     datos = cargar_datos_json()
+    #Detalles del modo
     tdah = datos["usuarios"][indice_usuario]["accesibilidad"]["tdah"]
     usuario = datos["usuarios"][indice_usuario]
 
     perfil = usuario["modo"]
     tdah = usuario["accesibilidad"]["tdah"]
    
-
     base_set, base_lista, palabras_validas = preparar_partida(partida)
 
     estado = crear_estado_pygame(base_lista, palabras_validas, perfil)
-    
+    estado["aviso_30"] = False
+    estado["aviso_10"] = False
+    estado["ultimo_mensaje"] = ""
     estado["tdah"] = tdah
 
     #Randomizador de botones_letras_csv
     letras = base_lista[:]
     random.shuffle(letras)
-
+    #Si elije el modo tdah tiene mas tiempo
     if tdah:
         tiempo_inicial = 75
     else:
         tiempo_inicial = 60
-
+    #Estos son los datos que toma la partida
     datos_partida = {
+        
         "estado": estado,
         "botones_disponibles": crear_botones_letras_csv(letras),
         "botones_usados": [],
@@ -100,9 +99,9 @@ def inicializar_partida_pygame(partida, perfil):
 
     return datos_partida
 
-
+#Aca ya es la parte de la ejecución y poner en practica lo que se desarrollo en las funciones
 def ejecutar_partida_pygame(partida):
-
+    #Aca se llama a la función que se hizo arriba 
     datos = inicializar_partida_pygame(partida, perfil)
     estado = datos["estado"]
     #Para que muestre nivel y partida en el juego 
@@ -119,18 +118,19 @@ def ejecutar_partida_pygame(partida):
     #Los botones de los comdines 
     botones_comodines = datos["botones_comodines"]
    
-    #Tiempo
+    #Datos base que se van a utilizar
     clock = pygame.time.Clock()
     running = True
     cambio_nivel = None
     mensaje_timer = 0
-    game_over = False
     mensaje = ""
+    intencion=""
+    #mientras este activo el programa 
     while running:
-        
+        #El tiempo va a ser de 
         dt = clock.tick(60) / 1000
         keys = pygame.key.get_pressed()
-
+        #Esto te permite salir al tocar X En la ventana
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT:
                 pygame.quit()
@@ -141,14 +141,14 @@ def ejecutar_partida_pygame(partida):
 
             if resultado is not None:
                 tipo, valor = resultado
-
+                #Comodines
                 if tipo == "revelar":
                     estado["mensaje"] = f"Palabra: {valor}"
-                    estado["mensaje_timer"] = 3
+                    estado["mensaje_timer"] = 7
 
                 elif tipo == "ubicar":
                     estado["mensaje"] = f"La letra '{valor.upper()}' está en todas las palabras"
-                    estado["mensaje_timer"] = 3
+                    estado["mensaje_timer"] = 7
 
                 elif tipo == "nivel":
                     estado["mensaje"] = f"Resultado del comodín: {valor.upper()}"
@@ -159,13 +159,17 @@ def ejecutar_partida_pygame(partida):
         tiempo_restante = actualizar_tiempo(tiempo_restante, dt)
 
             # Lo que te aparece en el fin de juego
-        fin, msg = verificar_fin_juego(estado, tiempo_restante)
-        if fin:
-            running = False
-            mensaje=msg
-            if msg == "derrota":
-               game_over = True
+        fin, intencion_tiempo = verificar_fin_juego(estado, tiempo_restante)
 
+        if intencion_tiempo and intencion_tiempo != estado["ultimo_mensaje"]:
+            estado["mensaje"] = intencion_tiempo
+            estado["mensaje_timer"] = 2
+            estado["ultimo_mensaje"] = intencion_tiempo
+
+        if fin:
+            intencion = intencion_tiempo
+            running = False
+        #Lo que ve el usuario
         dibujar_juego(PANTALLA,estado,botones_disponibles,botones_usados,FUENTE_PEQUENA,FUENTE_TIMER,tiempo_restante,mensaje,mensaje_timer,dt)
         dibujar_botones_accion(PANTALLA, botones_accion, FUENTE_PEQUENA)
         dibujar_comodines(PANTALLA, botones_comodines, comodines_usados, FUENTE_PEQUENA)
@@ -173,20 +177,21 @@ def ejecutar_partida_pygame(partida):
 
         pygame.display.update()
 
-    return estado["puntaje"], estado["errores"],game_over, cambio_nivel
+    return estado["puntaje"], estado["errores"],intencion, cambio_nivel
 
-
+#Son todas las acciones que puede hacer el jugador durante la partida
 def manejar_eventos_partida(ev, estado, botones_disponibles, botones_usados,botones_accion, botones_comodines, comodines_usados):
 
     cambio_nivel = None
     
-    # ===== DETECCION DE EVENTOS =====
+    #Detecta los eventos cuando haces click
     if ev.type == pygame.MOUSEBUTTONDOWN:
         pos = pygame.mouse.get_pos()
-
+        #Esto seria los botones que aun no se usan 
         manejar_click_botones(pos, botones_disponibles, botones_usados, estado["palabra_actual"])
+        #Esto seria los botones que ya se usaron 
         manejar_click_usados(pos, botones_disponibles, botones_usados, estado["palabra_actual"])
-
+        #por cada boton en botones_accion
         for b in botones_accion:
             if b["rect"].collidepoint(pos):
                 manejar_accion_jugador(b["accion"], estado, botones_usados,  botones_disponibles)
@@ -204,10 +209,12 @@ def manejar_eventos_partida(ev, estado, botones_disponibles, botones_usados,boto
 
     return cambio_nivel
 
-# ========== FLUJO DE NIVELES Y PARTIDAS ==========
+# Maneja el flujo de niveles y partidas
 def jugar_toda_la_partida(max_niveles: int = 5, max_partidas_por_nivel: int = 3):
+    #Datos base que se van a usar
     niveles = cargar_niveles()
     puntaje_total = 0
+    intentos_restantes = 3
     i_nivel = 0
     errores_total= 0
     datos = cargar_datos_json()                 
@@ -216,11 +223,9 @@ def jugar_toda_la_partida(max_niveles: int = 5, max_partidas_por_nivel: int = 3)
     limite_niveles = len(niveles)
     #Lo pone limite a la pogresion de niveles
     if limite_niveles > max_niveles:
-        limite_niveles = max_niveles
-
-
+        limite_niveles = max_niveles    
+    #nivel actual < limite de nivel
     while i_nivel < limite_niveles:
-        
         nivel = niveles[i_nivel]
         partidas_jugadas = 0
         # jugar hasta max_partidas_por_nivel o hasta agotar partidas
@@ -230,32 +235,39 @@ def jugar_toda_la_partida(max_niveles: int = 5, max_partidas_por_nivel: int = 3)
             datos = buscar_partida_aleatoria_sin_repetir(nivel)
             datos["nivel_actual"] = i_nivel + 1
             datos["partida_actual"] = partidas_jugadas + 1
-            puntos,errores,game_over,cambio_nivel = ejecutar_partida_pygame(datos)
-            
+            puntos,errores,intencion,cambio_nivel = ejecutar_partida_pygame(datos)
+            if intencion == "tiempo":
+                intentos_restantes -= 1
+                if intentos_restantes < 0:
+                    mostrar_resumen_final(puntaje_total, errores_total)
+                    return #Sale de todo los bucles
+                else:
+                    partidas_jugadas = 0
+                    continue
+            if intencion == "victoria":
+                pass  # sigue como siempre
             # mostrar pantalla de resumen y esperar tecla para continuar
             if usuario["accesibilidad"]["tdah"]:
                 mostrar_resumen_partida(puntos, errores)
-            
+            #Este es el acumulador de puntaje 
             puntaje_total += puntos
+            #Este es el acumulador de errores
             errores_total += errores
-
+            #Trae los datos existentes en Json y los usa
             datos = cargar_datos_json()
             usuario = datos["usuarios"][indice_usuario]
 
             usuario["stats"]["puntaje_total"] += puntaje_total
             usuario["stats"]["errores_totales"] += errores_total
             usuario["stats"]["partidas_jugadas"] += 1
-
+            #Los guarda en el Json
             guardar_datos_json(datos)
-            # FIN JUEGO: mostrar puntaje y errores totalales
-            if game_over:
-                mostrar_resumen_final(puntaje_total,errores_total)
-                return
-           
+            #Parte apicable del 50/50
+            #Hace que cambie de nivel hacia uno mas arriba
             if cambio_nivel == "subir":
                 i_nivel += 1
                 break
-
+            #Hace que cambie de nivel hacia uno más abajo
             elif cambio_nivel == "bajar":
                 if i_nivel > 0:
                     i_nivel -= 1
@@ -263,7 +275,7 @@ def jugar_toda_la_partida(max_niveles: int = 5, max_partidas_por_nivel: int = 3)
                 else:
                     partidas_jugadas = 0   
                     continue
-
+            #Y si esta en el nivel 1 y pierde el 50/50 resetea la partida
             elif cambio_nivel == "reset":
                 partidas_jugadas = 0       
                 continue
@@ -280,18 +292,18 @@ def mostrar_resumen_partida(puntos_obtenidos: int,errores:int):
     # pinta una pantalla simple con el puntaje de la partida y espera tecla para seguir
     espera = True
     while espera:
-        for ev in pygame.event.get():
+        for ev in pygame.event.get():#Averiguar
             if ev.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if ev.type == pygame.KEYDOWN:
                 espera = False
-
+        #Este es el fondo diferente al terminar la partida
         dibujar_vertical_degradado(PANTALLA, (0, 0, 80), (0, 150, 255))
+        #Dibuja el texto que aparecera en el resumen de la partida
         dibujar_texto_centrado(PANTALLA, f"Puntos de esta partida: {puntos_obtenidos}", FUENTE, (255, 255, 255), 200)
         dibujar_texto_centrado(PANTALLA, f"Errores de esta partida: {errores}", FUENTE, (255, 255, 255), 260)
         dibujar_texto_centrado(PANTALLA, "Presiona cualquier tecla para continuar...", FUENTE_PEQUENA, (200, 200, 200), 340)
-        R_CLOCK.tick(30)
         pygame.display.update()
         
 
@@ -305,14 +317,14 @@ def mostrar_resumen_final(puntaje_total, errores_total):
                 sys.exit()
             if ev.type == pygame.KEYDOWN:
                 espera = False 
-
+        #Fondo de resumen final
         dibujar_vertical_degradado(PANTALLA, (5, 20, 50), (0, 100, 180))
+        #Texto que aparece al terminar
         dibujar_texto_centrado(PANTALLA, f"Puntaje total: {puntaje_total}", FUENTE, (255, 255, 255), 200)
         dibujar_texto_centrado(PANTALLA, f"errores total: {errores_total}", FUENTE, (255, 255, 255), 260)
         dibujar_texto_centrado(PANTALLA, "Juego finalizado. Presiona cualquier tecla para salir.", FUENTE_PEQUENA, (200, 200, 200), 320)
-        R_CLOCK.tick(30)
         pygame.display.update()
 # max nivel 5 y max partidas 3
 if __name__ == "__main__":
-    jugar_toda_la_partida(max_niveles=1, max_partidas_por_nivel=1)
+    jugar_toda_la_partida(max_niveles=5, max_partidas_por_nivel=3)
     pygame.quit()

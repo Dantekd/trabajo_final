@@ -3,31 +3,29 @@ import json
 from ui_dibujado import *
 from ui_botones import *
 
-
 RUTA_JSON = r"C:/Users/Usuario/Desktop/trabajo_final/Final/pygame/datos.json"
-
 
 pygame.init()
 
 PANTALLA = pygame.display.set_mode((900, 600))
+
 pygame.display.set_caption("Login Juego")
 FUENTE = pygame.font.SysFont("arial", 28)
 
-
+#Carga la información existente en Json
 def cargar_datos_json():
     archivo = open(RUTA_JSON, "r")
     datos = json.load(archivo)
     archivo.close()
     return datos
 
-
+#Guarda los datos obtenidos de Json
 def guardar_datos_json(datos):
     archivo = open(RUTA_JSON, "w")
-    json.dump(datos, archivo, indent=4)
+    json.dump(datos, archivo, indent=4)#Desglosa la linea dump
     archivo.close()
 
-# Busca el usuarios dentro de json
-
+# Busca un usuario puntual recorriendo los usuarios dentro de json
 def buscar_usuario(datos, nombre, contra):
     indice_encontrado = -1
 
@@ -38,7 +36,7 @@ def buscar_usuario(datos, nombre, contra):
     return indice_encontrado
 
 
-#Crea un nuevo usuarios
+#Crea un nuevo usuario y caracteristicas base
 def crear_usuario(datos, nombre, contra):
 
     datos["usuarios"].append({
@@ -55,16 +53,14 @@ def crear_usuario(datos, nombre, contra):
         }
     })
 
-    return len(datos["usuarios"]) - 1
+    return len(datos["usuarios"]) - 1#Devuelve el indice de usuario recien creado
 
 
-# =========================================================
-# MANEJAR EVENTOS LOGIN
-# =========================================================
+#Controla los sucesos dentro del login
 def manejar_eventos_login(evento, user_text, pass_text, activo_user, activo_pass):
-
+    #Cuando el mouse lo clickea
     if evento.type == pygame.MOUSEBUTTONDOWN:
-
+        #Cuadros de diferentes colores segun que caja de texto este activo
         if pygame.Rect(300, 200, 300, 40).collidepoint(evento.pos):
             activo_user = True
             activo_pass = False
@@ -72,10 +68,11 @@ def manejar_eventos_login(evento, user_text, pass_text, activo_user, activo_pass
         elif pygame.Rect(300, 300, 300, 40).collidepoint(evento.pos):
             activo_user = False
             activo_pass = True
-
+    #cuando se activa KEYdown trae dos cosas
     elif evento.type == pygame.KEYDOWN:
 
-        # Backspace elimina el último carácter
+        # Esto permite que lo ingresado se pueda borrar con la tecla de borrar
+        #key es la tecla fisica que se se toco
         if evento.key == pygame.K_BACKSPACE:
             if activo_user:
                 user_text = user_text[:-1]
@@ -83,6 +80,7 @@ def manejar_eventos_login(evento, user_text, pass_text, activo_user, activo_pass
                 pass_text = pass_text[:-1]
 
         # Agregar caracteres imprimibles a su campo correspondiente
+        #unicodde seria el caracter 
         elif evento.unicode and evento.key != pygame.K_RETURN:
             if activo_user:
                 user_text += evento.unicode
@@ -93,9 +91,7 @@ def manejar_eventos_login(evento, user_text, pass_text, activo_user, activo_pass
     return user_text, pass_text, activo_user, activo_pass
 
 
-# =========================================================
-# PANTALLA LOGIN PRINCIPAL
-# =========================================================
+#Esto es el front-end del login
 
 def pantalla_login():
 
@@ -113,6 +109,7 @@ def pantalla_login():
     mensaje_error = ""
 
     corriendo = True
+    #Se activa todo 
     while corriendo:
 
         for evento in pygame.event.get():
@@ -121,19 +118,20 @@ def pantalla_login():
                 exit()
             user_text, pass_text, activo_user, activo_pass = manejar_eventos_login(evento, user_text, pass_text, activo_user, activo_pass)
             
-              # ===== ENTER = SOLO LOGIN =====
+            #Si toca enter se logea
             if evento.type == pygame.KEYDOWN and evento.key == pygame.K_RETURN:
                 indice = buscar_usuario(datos, user_text, pass_text)
                 if indice != -1:
                     usuario_logueado = indice
                     corriendo = False
                 else:
+                    #Esto pasas si ingresa algo incorrecto
                     mensaje_error = "Usuario o contraseña incorrectos"
             
-            
+            #Detecta el click del Mouse
             if evento.type == pygame.MOUSEBUTTONDOWN:  
             
-                #Registro
+                #Con esto te permite registrarte y lo que puede suceder
                 if botones["registro"]["rect"].collidepoint(evento.pos):
                     if user_text == "" or pass_text == "":
                         mensaje_error = "Campos vacíos"
@@ -157,25 +155,20 @@ def pantalla_login():
 
     return usuario_logueado
 
-# =========================================================
-# MANEJAR EVENTOS CONFIG
-# =========================================================
+#Esto son las cosas con las que el usuario puede interactuar en configuración
 def manejar_eventos_configuracion(evento, config):
 
     if evento.type == pygame.MOUSEBUTTONDOWN:
 
         if pygame.Rect(250, 250, 200, 80).collidepoint(evento.pos):
-            config = "estandar"
+            config = "normal"
 
         if pygame.Rect(600, 250, 200, 80).collidepoint(evento.pos):
-            config = "daltonico"
+            config = "tdah"
 
     return config
 
-
-# =========================================================
-# PANTALLA CONFIGURACION
-# =========================================================
+#Esto es lo que ve el usuario de configuración
 def pantalla_configuracion(indice_usuario):
 
     datos = cargar_datos_json()
@@ -193,7 +186,7 @@ def pantalla_configuracion(indice_usuario):
             if evento.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-
+            #Al clickear con el Mouse dentro de esa area sucede eso
             if evento.type == pygame.MOUSEBUTTONDOWN:
 
                 if botones["normal"]["rect"].collidepoint(evento.pos):
@@ -211,8 +204,10 @@ def pantalla_configuracion(indice_usuario):
         dibujar_configuracion(PANTALLA, FUENTE, botones)
         pygame.display.update()
 
+    
     guardar_datos_json(datos)
     return modo_elegido
+
 #La u representa a el usuario y la función sirve para asegurar que todos los usuarios tengan la misma estructura
 def normalizar_usuarios(datos):
     for u in datos["usuarios"]:
@@ -232,11 +227,3 @@ def normalizar_usuarios(datos):
                 "errores_totales": 0,
                 "partidas_jugadas": 0
             }
-def main():
-
-    indice = pantalla_login()
-    config = pantalla_configuracion(indice)
-
-    print("Usuario indice:", indice)
-    print("Configuracion elegida:", config)
-

@@ -1,6 +1,5 @@
-# comodines.py
 import random
-
+#Funcionamiento del comodin revelar
 def comodin_revelar_palabra(estado):
     restantes = []
 
@@ -18,14 +17,10 @@ def comodin_revelar_palabra(estado):
     return parcial
 
 
-   
+#Funcionamiento del comodin ubicar.
 def comodin_ubicar_letra(estado):
-    """
-    Selecciona una letra que aparezca en todas las palabras restantes
-    y la devuelve para ser mostrada al jugador.
-    """
     restantes = []
-
+    
     for p in estado["palabras_validas"]:
         if p not in estado["palabras_encontradas"]:
             restantes.append(p)
@@ -43,6 +38,8 @@ def comodin_ubicar_letra(estado):
 
     return letra
 
+
+#Función 50/50 que es más logica de partida 
 
 def comodin_nivel():
     numero = random.randint(0, 1)
