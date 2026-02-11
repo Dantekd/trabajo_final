@@ -83,6 +83,7 @@ def dibujar_juego(pantalla,estado,botones_disponibles,botones_usados,fuente_pequ
     ),
     (680, 60)
     )
+    
     # Mensaje al usar un comodin
     if estado.get("mensaje_comodin_timer", 0) > 0:
         dibujar_texto_centrado(pantalla,estado["mensaje_comodin"],FUENTE_PEQUENA,(255, 255, 0),170)
@@ -180,9 +181,6 @@ def dibujar_configuracion(pantalla,FUENTE,botones):
 
 #Sirve para poner texto fijo 
 def dibujar_texto(pantalla, texto, fuente, color, x, y):
-    """
-    Dibuja un texto en la pantalla en la posición (x, y)
-    """
     superficie = fuente.render(texto, True, color)
     pantalla.blit(superficie, (x, y))
 
