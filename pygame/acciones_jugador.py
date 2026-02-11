@@ -52,11 +52,14 @@ def accion_submit(estado):
     estado["ultimo_resultado"] = resultado
 
     return estado
+
 #Esto sirve para al ingresar la palabra que sucede
-def manejar_accion_jugador(accion, estado, botones_usados,botones_disponibles):
-    if accion == "submit":
-        palabra = "".join(estado["palabra_actual"])
-        resultado=procesar_palabra_pygame(estado, palabra)
+def accion_submit(estado, botones_usados, botones_disponibles):
+    palabra = "".join(estado["palabra_actual"])
+    resultado = procesar_palabra_pygame(estado, palabra)
+
+    # Muestra los mensajes solo con modo tdah
+    if estado.get("tdah", False):
         if resultado == "repetida":
             estado["mensaje"] = "Ya ingresaste esa palabra"
             estado["mensaje_timer"] = 2
@@ -69,39 +72,52 @@ def manejar_accion_jugador(accion, estado, botones_usados,botones_disponibles):
             estado["mensaje"] = "¡Palabra correcta!"
             estado["mensaje_timer"] = 2
 
-        for boton_usado in botones_usados:
-            letra = boton_usado["letra"]
-            for b in botones_disponibles:
-                if b["letra"] == letra:
-                    b["activa"] = True
-                    break
-
-        estado["palabra_actual"].clear()
-        botones_usados.clear()
-
-        # devuelve los botones usados
+    # Reactivar letras usadas
+    for boton_usado in botones_usados:
+        letra = boton_usado["letra"]
         for b in botones_disponibles:
-            b["activa"] = True
+            if b["letra"] == letra:
+                b["activa"] = True
+                break
 
-        botones_usados.clear()
+    estado["palabra_actual"].clear()
+    botones_usados.clear()
+
+    for b in botones_disponibles:
+        b["activa"] = True
+
+    
+#Funcionamiento del Clear
+def accion_clear(estado, botones_usados, botones_disponibles):
+    estado["palabra_actual"].clear()
+
+    for b in botones_disponibles:
+        b["activa"] = True
+
+    botones_usados.clear()
+
+#Funcionamiento del shuffle
+def accion_shuffle(botones_disponibles):
+    letras = [b["letra"] for b in botones_disponibles]
+    random.shuffle(letras)
+
+    botones_disponibles.clear()
+    botones_disponibles.extend(crear_botones_letras_csv(letras))
+
+#Llama a todas las acciones de palabras.
+def manejar_accion_jugador(accion, estado, botones_usados, botones_disponibles):
+
+    if accion == "submit":
+        accion_submit(estado, botones_usados, botones_disponibles)
 
     elif accion == "clear":
-        estado["palabra_actual"].clear()
-
-        for b in botones_disponibles:
-            b["activa"] = True
-
-        botones_usados.clear()
+        accion_clear(estado, botones_usados, botones_disponibles)
 
     elif accion == "shuffle":
-        letras = [b["letra"] for b in botones_disponibles]
-        random.shuffle(letras)
-
-        botones_disponibles.clear()
-        botones_disponibles.extend(crear_botones_letras_csv(letras))
+        accion_shuffle(botones_disponibles)
 
     return estado
-
+#Detecta las teclas y ejecuta para las acciones de palabras
 def detectar_accion_teclado(evento):
 
     accion = None

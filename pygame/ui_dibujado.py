@@ -82,10 +82,15 @@ def dibujar_juego(pantalla,estado,botones_disponibles,botones_usados,fuente_pequ
     ),
     (680, 60)
     )
-    if estado["mensaje_timer"] > 0:
-        dibujar_texto_centrado(pantalla,estado["mensaje"],FUENTE_PEQUENA,(255, 255, 0),180)
-        estado["mensaje_timer"] -= dt
+    # Mensaje al usar un comodin
+    if estado.get("mensaje_comodin_timer", 0) > 0:
+        dibujar_texto_centrado(pantalla,estado["mensaje_comodin"],FUENTE_PEQUENA,(255, 255, 0),170)
+        estado["mensaje_comodin_timer"] -= dt
 
+    # Mensaje de las palabras cuando ingresas algo
+    elif estado.get("mensaje_timer", 0) > 0:
+        dibujar_texto_centrado(pantalla,estado["mensaje"],FUENTE_PEQUENA,(255, 255, 255),200)
+        estado["mensaje_timer"] -= dt
     if mensaje_timer > 0:
         pantalla.blit(
             fuente_pequena.render(mensaje, True, (255,255,0)),
@@ -201,10 +206,7 @@ def dibujar_login(pantalla,user_text, pass_text, activo_user, activo_pass):
 #esto es algo mas puntual que se usa en acciones_jugador
 def dibujar_botones_accion(pantalla, botones, fuente):
     for b in botones:
-        pygame.draw.rect(pantalla, (80, 80, 80), b["rect"])
-        texto = fuente.render(b["texto"], True, (255, 255, 255))
-        pantalla.blit(texto, b["rect"].move(10, 5))
-        
+        dibujar_botones(pantalla, b, fuente)
 #Esto es una funcion mas generica que se usa en login
 def dibujar_botones(pantalla, boton, fuente):
     pygame.draw.rect(pantalla, (80,80,80), boton["rect"])

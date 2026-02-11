@@ -143,16 +143,16 @@ def ejecutar_partida_pygame(partida):
                 tipo, valor = resultado
                 #Comodines
                 if tipo == "revelar":
-                    estado["mensaje"] = f"Palabra: {valor}"
-                    estado["mensaje_timer"] = 7
+                    estado["mensaje_comodin"] = f"Palabra: {valor}"
+                    estado["mensaje_comodin_timer"] = 7
 
                 elif tipo == "ubicar":
-                    estado["mensaje"] = f"La letra '{valor.upper()}' está en todas las palabras"
-                    estado["mensaje_timer"] = 7
+                    estado["mensaje_comodin"] = f"La letra '{valor.upper()}' está en todas las palabras"
+                    estado["mensaje_comodin_timer"] = 7
 
                 elif tipo == "nivel":
-                    estado["mensaje"] = f"Resultado del comodín: {valor.upper()}"
-                    estado["mensaje_timer"] = 2
+                    estado["mensaje_comodin"] = f"Resultado del comodín: {valor.upper()}"
+                    estado["mensaje_comodin_timer"] = 2
                     cambio_nivel = valor
                     running = False
             # tiempo
@@ -162,8 +162,8 @@ def ejecutar_partida_pygame(partida):
         fin, intencion_tiempo = verificar_fin_juego(estado, tiempo_restante)
 
         if intencion_tiempo and intencion_tiempo != estado["ultimo_mensaje"]:
-            estado["mensaje"] = intencion_tiempo
-            estado["mensaje_timer"] = 2
+            estado["mensaje_comodin"] = intencion_tiempo
+            estado["mensaje_comodin_timer"] = 2
             estado["ultimo_mensaje"] = intencion_tiempo
 
         if fin:
