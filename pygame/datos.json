@@ -42,14 +42,14 @@
         {
             "nombre_usuario": "Dante",
             "contrasena": "2007",
-            "modo": "normal",
+            "modo": "tdah",
             "accesibilidad": {
-                "tdah": false
+                "tdah": true
             },
             "stats": {
-                "puntaje_total": 364,
-                "errores_totales": 18,
-                "partidas_jugadas": 59
+                "puntaje_total": 1390,
+                "errores_totales": 25,
+                "partidas_jugadas": 154
             }
         },
         {
@@ -68,14 +68,14 @@
         {
             "nombre_usuario": "Poel",
             "contrasena": "akira911",
-            "modo": "normal",
+            "modo": "tdah",
             "accesibilidad": {
-                "tdah": false
+                "tdah": true
             },
             "stats": {
-                "puntaje_total": 0,
-                "errores_totales": 0,
-                "partidas_jugadas": 0
+                "puntaje_total": 231,
+                "errores_totales": 114,
+                "partidas_jugadas": 21
             }
         },
         {

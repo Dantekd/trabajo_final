@@ -1,8 +1,8 @@
 
-import random
+import pygame
 from pygame.locals import *
 from comodines import comodin_revelar_palabra,comodin_ubicar_letra,comodin_nivel
-
+from acciones_jugador import *
 
 #Actualiza el tiempo en cada partida
 def actualizar_tiempo(tiempo_restante, dt):
@@ -11,6 +11,35 @@ def actualizar_tiempo(tiempo_restante, dt):
 
     return nuevo_tiempo
 
+#Son todas las acciones que puede hacer el jugador durante la partida
+def manejar_eventos_partida(ev, estado, botones_disponibles, botones_usados,botones_accion, botones_comodines, comodines_usados):
+
+    cambio_nivel = None
+    
+    #Detecta los eventos cuando haces click
+    if ev.type == pygame.MOUSEBUTTONDOWN:
+        pos = pygame.mouse.get_pos()
+        #Esto seria los botones que aun no se usan 
+        manejar_click_botones(pos, botones_disponibles, botones_usados, estado["palabra_actual"])
+        #Esto seria los botones que ya se usaron 
+        manejar_click_usados(pos, botones_disponibles, botones_usados, estado["palabra_actual"])
+        #por cada boton en botones_accion
+        for b in botones_accion:
+            if b["rect"].collidepoint(pos):
+                manejar_accion_jugador(b["accion"], estado, botones_usados,  botones_disponibles)
+        
+        # solo detecta comodín
+        resultado = manejar_click_comodines(pos, botones_comodines, comodines_usados, estado)
+
+        if resultado is not None:
+            cambio_nivel = resultado
+    elif ev.type == pygame.KEYDOWN:
+        accion = detectar_accion_teclado(ev)
+
+        if accion is not None:
+            manejar_accion_jugador(accion,estado,botones_usados,botones_disponibles)
+
+    return cambio_nivel
 
 #Esto le pone condiciones para que el juego termine mostrandote la pantalla de fin y un mensaje
 def verificar_fin_juego(estado, tiempo_restante):

@@ -16,12 +16,14 @@ def dibujar_botones_disponibles(pantalla, botones, fuente):
         pygame.draw.circle(pantalla, color, b["rect"].center, 22)
         txt = fuente.render(b["letra"], True, (0, 0, 0))
         pantalla.blit(txt, (b["rect"].x + 14, b["rect"].y + 10))
+
 #Proceso similar a la función de botones dispobles
 def dibujar_botones_usados(pantalla, botones, fuente):
     for b in botones:
         pygame.draw.circle(pantalla, (255, 200, 100), b["rect"].center, 22)
         txt = fuente.render(b["letra"], True, (0, 0, 0))
         pantalla.blit(txt, (b["rect"].x + 14, b["rect"].y + 10))
+
 #Esto es lo que hace el degradado de fondo del juego
 def dibujar_vertical_degradado(surface, top_color, bottom_color):
     height = surface.get_height()
@@ -33,6 +35,7 @@ def dibujar_vertical_degradado(surface, top_color, bottom_color):
         g = int(top_color[1] * (1 - ratio) + bottom_color[1] * ratio)
         b = int(top_color[2] * (1 - ratio) + bottom_color[2] * ratio)
         pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
+
 #Dibuja el texto siempre en mitad de la pantalla
 def dibujar_texto_centrado(pantalla,texto,fuente,color,y):
   
@@ -49,10 +52,8 @@ def dibujar_rect_redondeado(superficie,color,x, y,ancho, alto,radio=None,borde=0
 
 #Dibuja el front-end principal del juego 
 def dibujar_juego(pantalla,estado,botones_disponibles,botones_usados,fuente_pequena,fuente_timer,tiempo_restante,mensaje,mensaje_timer,dt):
-
     dibujar_vertical_degradado(pantalla, (238,118,94), (255,168,89))
     dibujar_rect_redondeado(pantalla,(250,155,155),100,310,670,60,borde=0)
-
     dibujar_botones_disponibles(pantalla, botones_disponibles, fuente_pequena)
     dibujar_botones_usados(pantalla, botones_usados, fuente_pequena)
     if estado["tdah"]:
@@ -100,6 +101,7 @@ def dibujar_juego(pantalla,estado,botones_disponibles,botones_usados,fuente_pequ
     mensaje_timer -= dt
 
     return mensaje_timer
+
 #Esto va a aparecer cuando se clickean los comodines
 def dibujar_comodines(pantalla, botones, comodines_nivel, fuente):
 
@@ -175,6 +177,7 @@ def dibujar_configuracion(pantalla,FUENTE,botones):
 
     dibujar_texto(pantalla, "Maximo: , ", FUENTE, (224,168,1),700,520)
 
+
 #Sirve para poner texto fijo 
 def dibujar_texto(pantalla, texto, fuente, color, x, y):
     """
@@ -203,10 +206,13 @@ def dibujar_login(pantalla,user_text, pass_text, activo_user, activo_pass):
     dibujar_texto( pantalla,"Ingrese Enter si quiere loguearse. ",FUENTE_PEQUENA,(80, 80, 80),320,500)
     dibujar_texto( pantalla,"Si quiere registrarse porfavor complete los campos con lo deseado y toque el boton.",FUENTE_PEQUENA,(80, 80, 80),100,550)
 
+
 #esto es algo mas puntual que se usa en acciones_jugador
 def dibujar_botones_accion(pantalla, botones, fuente):
     for b in botones:
         dibujar_botones(pantalla, b, fuente)
+
+        
 #Esto es una funcion mas generica que se usa en login
 def dibujar_botones(pantalla, boton, fuente):
     pygame.draw.rect(pantalla, (80,80,80), boton["rect"])

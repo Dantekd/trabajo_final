@@ -1,9 +1,52 @@
+import random
+
 from login_pygame import *
 from nucleo_juego import preparar_partida
 from numericas import sumar_puntaje, acumular_ingresos_incorrectos
 from ui_botones import *
 
 #Esto representaria como las reglas del juego
+
+#Esto seria lo primero que carga al iniciar el programa
+def inicializar_partida_pygame(partida, perfil,indice_usuario):
+    #Toda la parte de Json
+    datos = cargar_datos_json()
+    #Detalles del modo
+    tdah = datos["usuarios"][indice_usuario]["accesibilidad"]["tdah"]
+    usuario = datos["usuarios"][indice_usuario]
+
+    perfil = usuario["modo"]
+    tdah = usuario["accesibilidad"]["tdah"]
+   
+    base_set, base_lista, palabras_validas = preparar_partida(partida)
+
+    estado = crear_estado_pygame(base_lista, palabras_validas, perfil)
+    estado["aviso_30"] = False
+    estado["aviso_10"] = False
+    estado["ultimo_mensaje"] = ""
+    estado["tdah"] = tdah
+
+    #Randomizador de botones_letras_csv
+    letras = base_lista[:]
+    random.shuffle(letras)
+    #Si elije el modo tdah tiene mas tiempo
+    if tdah:
+        tiempo_inicial = 75
+    else:
+        tiempo_inicial = 60
+    #Estos son los datos que toma la partida
+    datos_partida = {
+        
+        "estado": estado,
+        "botones_disponibles": crear_botones_letras_csv(letras),
+        "botones_usados": [],
+        "botones_accion": crear_botones_accion(),
+        "botones_comodines": crear_botones_comodines(),
+        "comodines_usados": {"revelar": False, "ubicar": False, "nivel": False},
+        "tiempo_restante": tiempo_inicial
+    }
+
+    return datos_partida
 
 #Esto crea lo datos que puede llegar a haber dentro del juego osea las estadisticas generales
 def crear_estado_pygame(base_lista, palabras_validas, perfil):

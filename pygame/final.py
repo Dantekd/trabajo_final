@@ -14,7 +14,7 @@ if RUTA_PROYECTO not in sys.path:
 #Imports que se utilizan
 from csv_datos import cargar_niveles
 from nucleo_juego import preparar_partida, buscar_partida_aleatoria_sin_repetir
-from nucleo_pygame import crear_estado_pygame
+from nucleo_pygame import crear_estado_pygame,inicializar_partida_pygame
 from logicas_pygame import *
 from ui_dibujado import *
 from ui_botones import *
@@ -43,6 +43,7 @@ icono = pygame.image.load("Final/pygame/icono_juego.png")
 pygame.display.set_icon(icono)
 
 #El tipo de fuente que se utiliza en el juego
+FUENTE_TITULO=pygame.font.SysFont("Old English Text",90)
 FUENTE = pygame.font.SysFont(None, 48)
 FUENTE_PEQUENA = pygame.font.SysFont(None, 32)
 FUENTE_TIMER = pygame.font.SysFont(None, 28)
@@ -58,51 +59,11 @@ sonido_mute = pygame.transform.scale(sonido_mute, (40, 40))
 sonido_max= pygame.image.load(os.path.join(RUTA_ACTUAL, "sonido", "maximo_volumen.png"))
 sonido_max = pygame.transform.scale(sonido_max, (40, 40))
 
-#Esto seria lo primero que carga al iniciar el programa
-def inicializar_partida_pygame(partida, perfil):
-    #Toda la parte de Json
-    datos = cargar_datos_json()
-    #Detalles del modo
-    tdah = datos["usuarios"][indice_usuario]["accesibilidad"]["tdah"]
-    usuario = datos["usuarios"][indice_usuario]
-
-    perfil = usuario["modo"]
-    tdah = usuario["accesibilidad"]["tdah"]
-   
-    base_set, base_lista, palabras_validas = preparar_partida(partida)
-
-    estado = crear_estado_pygame(base_lista, palabras_validas, perfil)
-    estado["aviso_30"] = False
-    estado["aviso_10"] = False
-    estado["ultimo_mensaje"] = ""
-    estado["tdah"] = tdah
-
-    #Randomizador de botones_letras_csv
-    letras = base_lista[:]
-    random.shuffle(letras)
-    #Si elije el modo tdah tiene mas tiempo
-    if tdah:
-        tiempo_inicial = 75
-    else:
-        tiempo_inicial = 60
-    #Estos son los datos que toma la partida
-    datos_partida = {
-        
-        "estado": estado,
-        "botones_disponibles": crear_botones_letras_csv(letras),
-        "botones_usados": [],
-        "botones_accion": crear_botones_accion(),
-        "botones_comodines": crear_botones_comodines(),
-        "comodines_usados": {"revelar": False, "ubicar": False, "nivel": False},
-        "tiempo_restante": tiempo_inicial
-    }
-
-    return datos_partida
 
 #Aca ya es la parte de la ejecución y poner en practica lo que se desarrollo en las funciones
 def ejecutar_partida_pygame(partida):
     #Aca se llama a la función que se hizo arriba 
-    datos = inicializar_partida_pygame(partida, perfil)
+    datos = inicializar_partida_pygame(partida, perfil,indice_usuario)
     estado = datos["estado"]
     #Para que muestre nivel y partida en el juego 
     estado["nivel_actual"] = partida["nivel_actual"]
@@ -179,35 +140,6 @@ def ejecutar_partida_pygame(partida):
 
     return estado["puntaje"], estado["errores"],intencion, cambio_nivel
 
-#Son todas las acciones que puede hacer el jugador durante la partida
-def manejar_eventos_partida(ev, estado, botones_disponibles, botones_usados,botones_accion, botones_comodines, comodines_usados):
-
-    cambio_nivel = None
-    
-    #Detecta los eventos cuando haces click
-    if ev.type == pygame.MOUSEBUTTONDOWN:
-        pos = pygame.mouse.get_pos()
-        #Esto seria los botones que aun no se usan 
-        manejar_click_botones(pos, botones_disponibles, botones_usados, estado["palabra_actual"])
-        #Esto seria los botones que ya se usaron 
-        manejar_click_usados(pos, botones_disponibles, botones_usados, estado["palabra_actual"])
-        #por cada boton en botones_accion
-        for b in botones_accion:
-            if b["rect"].collidepoint(pos):
-                manejar_accion_jugador(b["accion"], estado, botones_usados,  botones_disponibles)
-        
-        # solo detecta comodín
-        resultado = manejar_click_comodines(pos, botones_comodines, comodines_usados, estado)
-
-        if resultado is not None:
-            cambio_nivel = resultado
-    elif ev.type == pygame.KEYDOWN:
-        accion = detectar_accion_teclado(ev)
-
-        if accion is not None:
-            manejar_accion_jugador(accion,estado,botones_usados,botones_disponibles)
-
-    return cambio_nivel
 
 # Maneja el flujo de niveles y partidas
 def jugar_toda_la_partida(max_niveles: int = 5, max_partidas_por_nivel: int = 3):
@@ -238,14 +170,14 @@ def jugar_toda_la_partida(max_niveles: int = 5, max_partidas_por_nivel: int = 3)
             puntos,errores,intencion,cambio_nivel = ejecutar_partida_pygame(datos)
             if intencion == "tiempo":
                 intentos_restantes -= 1
-                if intentos_restantes < 0:
+                if intentos_restantes == 0:
                     mostrar_resumen_final(puntaje_total, errores_total)
                     return #Sale de todo los bucles
                 else:
                     partidas_jugadas = 0
                     continue
             if intencion == "victoria":
-                pass  # sigue como siempre
+                pass 
             # mostrar pantalla de resumen y esperar tecla para continuar
             if usuario["accesibilidad"]["tdah"]:
                 mostrar_resumen_partida(puntos, errores)
@@ -320,9 +252,10 @@ def mostrar_resumen_final(puntaje_total, errores_total):
         #Fondo de resumen final
         dibujar_vertical_degradado(PANTALLA, (5, 20, 50), (0, 100, 180))
         #Texto que aparece al terminar
-        dibujar_texto_centrado(PANTALLA, f"Puntaje total: {puntaje_total}", FUENTE, (255, 255, 255), 200)
-        dibujar_texto_centrado(PANTALLA, f"errores total: {errores_total}", FUENTE, (255, 255, 255), 260)
-        dibujar_texto_centrado(PANTALLA, "Juego finalizado. Presiona cualquier tecla para salir.", FUENTE_PEQUENA, (200, 200, 200), 320)
+        dibujar_texto_centrado(PANTALLA, f"GAME OVER", FUENTE_TITULO, (255, 255, 255), 150)
+        dibujar_texto_centrado(PANTALLA, f"Puntaje total: {puntaje_total}", FUENTE, (255, 255, 255), 260)
+        dibujar_texto_centrado(PANTALLA, f"errores total: {errores_total}", FUENTE, (255, 255, 255), 330)
+        dibujar_texto_centrado(PANTALLA, "Juego finalizado. Presiona cualquier tecla para salir.", FUENTE_PEQUENA, (200, 200, 200), 420)
         pygame.display.update()
 # max nivel 5 y max partidas 3
 if __name__ == "__main__":
